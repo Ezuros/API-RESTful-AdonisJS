@@ -5,6 +5,7 @@ import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext' //tudo q
 import Application from '@ioc:Adonis/Core/Application' //usado para mover os arquivos(no caso as imagens) para onde queremos
 
 import Moment from 'App/Models/Moment'
+import HttpExceptionHandler from '@ioc:Adonis/Core/HttpExceptionHandler'
 
 export default class MomentsController {
     private validationOptions = {
@@ -63,6 +64,37 @@ export default class MomentsController {
         return {
             message: "Momento excluído com sucesso",
             data: moment,
+        }
+    }
+
+    public async update({ params, request }: HttpContextContract) {
+
+        const body = request.body()
+
+        const moment = await Moment.findOrFail(params.id)
+
+        moment.title = body.title
+        moment.description = body.description
+
+        if (moment.image != body.image || !moment.image) {
+            const image = request.file('image', this.validationOptions)
+
+            if (image) {
+                const imageName = `${uuidv4()}.${image.extname}`
+
+                await image.move(Application.tmpPath('uploads'), {
+                    name: imageName
+                })
+
+                moment.image = imageName
+            }
+
+            await moment.save()
+
+            return {
+                message: "Momento atualizado com sucesso",
+                data: moment,
+            }
         }
     }
 
