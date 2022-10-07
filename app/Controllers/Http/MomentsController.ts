@@ -40,7 +40,7 @@ export default class MomentsController {
 
     public async index() {  //GET
 
-        const moments = await Moment.all()
+        const moments = await Moment.query().preload("comments") //preload carrega todos os comentários do relacionamento
 
         return {
             data: moments
@@ -50,6 +50,8 @@ export default class MomentsController {
     public async show({ params }: HttpContextContract) {
 
         const moment = await Moment.findOrFail(params.id)
+
+        await moment.load("comments") //carrega todos os comentários do post individualmente
 
         return {
             data: moment,
